@@ -1,0 +1,175 @@
+{
+  "checks": {
+    "clean_notebook_execution": "Passed in fresh local Python namespaces with missing/synthetic inputs; Kaggle execution unverified.",
+    "deterministic_notebook_and_embedded_hash_tests_passed": true,
+    "errors": 0,
+    "failures": 0,
+    "local_cli_python_process_exit_code": 2,
+    "local_discovery_status": "INPUTS_NOT_LOCATED",
+    "notebook_cell_count": 6,
+    "notebook_nbformat_valid": true,
+    "notebook_saved_execution_outputs": 0,
+    "passed": 21,
+    "skipped": 1,
+    "skipped_test_reason": "This Windows session cannot create directory symlinks; simulated junction and path containment tests passed.",
+    "test_data": "Temporary tiny synthetic filesystem/CSV-name fixtures only; no actual labels or DICOMs.",
+    "test_duration_seconds": 0.257,
+    "tests_run": 22,
+    "unittest_command": "python -m unittest discover -s tests -v"
+  },
+  "cleanup": {
+    "files_removed": [],
+    "inventory": "D:\\RSNA\\docs\\cleanup_inventory.md",
+    "review_status": "PENDING"
+  },
+  "client_date": "2026-10-11",
+  "cloud_costs_incurred": false,
+  "created_files": [
+    {
+      "path": "D:\\RSNA\\.gitignore",
+      "sha256": "c94067dc98cc0b8ef98a5d81248c19d4334c972e306f63b463b76fd499f92a92",
+      "size_bytes": 242
+    },
+    {
+      "path": "D:\\RSNA\\rsna_knee\\__init__.py",
+      "sha256": "59b5fb60289938d326abdf8065d9bbee9fd4282e4fb02ab957cc36374606d4f5",
+      "size_bytes": 75
+    },
+    {
+      "path": "D:\\RSNA\\rsna_knee\\data_access.py",
+      "sha256": "bf1f61e5e506a066457f5f1d05b4cb9b58d4781c1ad800666d18be4570fa7cea",
+      "size_bytes": 10426
+    },
+    {
+      "path": "D:\\RSNA\\scripts\\build_notebook.py",
+      "sha256": "499f24d99bd62e8f5042bc379567e189decec8366268559e687a653ecafafd88",
+      "size_bytes": 4706
+    },
+    {
+      "path": "D:\\RSNA\\notebooks\\kaggle_access_check.ipynb",
+      "sha256": "8be4b8df0c6b3c2fe820e7939b947f76e5371f384c13f6ca029ea1d5707eac4a",
+      "size_bytes": 16435
+    },
+    {
+      "path": "D:\\RSNA\\tests\\test_data_access.py",
+      "sha256": "80363469ba34dd3b63f5511cfa75aaa0492e0c479f16dc6290ba9b9e98b23996",
+      "size_bytes": 13465
+    },
+    {
+      "path": "D:\\RSNA\\tests\\test_notebook.py",
+      "sha256": "34de27ff6f92e36a0358c61c045562b3f992e59460e5fa4f6d3bc79b22a1af67",
+      "size_bytes": 3705
+    },
+    {
+      "path": "D:\\RSNA\\docs\\cleanup_inventory.md",
+      "sha256": "6ebf824a862118eda67eab5a70fbc5ef1ee48387e592fd8136a841bf4fb8d283",
+      "size_bytes": 3004
+    },
+    {
+      "path": "D:\\RSNA\\docs\\kaggle_workflow.md",
+      "sha256": "917b1df03724a9ea9f316febbe69b04aeb525e6623411b7b29d5f845681bbff1",
+      "size_bytes": 6692
+    },
+    {
+      "path": "D:\\RSNA\\docs\\phase_a_rebuild.md",
+      "sha256": "404fc1e39eb9767a78da09bb524ea326e38e26e1024ddda5c7dd949aae87f8ab",
+      "size_bytes": 7346
+    }
+  ],
+  "credentials_read_or_exposed": false,
+  "git_mutations_performed": false,
+  "gold_resource": {
+    "observed_study_count": null,
+    "provenance": "UNKNOWN",
+    "source": "UNKNOWN",
+    "status": "GOLD_RESOURCE_NOT_LOCATED",
+    "used": false
+  },
+  "gpu_usage": "NONE",
+  "input_snapshot_before_changes": {
+    "checkpoints": 0,
+    "competition_manifests": 0,
+    "dicom_files": 0,
+    "gitkeep_count": 16,
+    "non_sensitive_file_count": 20,
+    "populated_experiment_configs": 0,
+    "source_files": 0,
+    "tests": 0
+  },
+  "kaggle": {
+    "account_action_performed": false,
+    "browser_access": "UNVERIFIED",
+    "cli_dependency": false,
+    "full_local_download_permitted": false,
+    "input_attached_and_executed": false,
+    "rules_acceptance": "UNVERIFIED"
+  },
+  "local_access_artifacts": [
+    {
+      "path": "D:\\RSNA\\artifacts\\access_check_20261011T161245577786Z_38bf7484.json",
+      "sha256": "389273ff4af5403e5e4a342ab6ddc781a307c946f4294c4ef3837c525d12966a",
+      "size_bytes": 1464
+    },
+    {
+      "path": "D:\\RSNA\\artifacts\\access_check_20261011T161319117128Z_ec05b9ca.json",
+      "sha256": "0e8157c1ad967b406a2d65a22b33060ff18f74fe3f581b7ceb95f3062f89f7b5",
+      "size_bytes": 1538
+    }
+  ],
+  "local_access_duration_before_report_write_seconds": 0.046681400000124995,
+  "model_metrics": null,
+  "modified_files": [
+    {
+      "path": "D:\\RSNA\\README.md",
+      "sha256": "e8796e32dfa0beef5334f239d76e1838c536145d2b1879006949934f8e341972",
+      "size_bytes": 3168
+    }
+  ],
+  "next_action": "Review cleanup inventory and run the access-check notebook through Kaggle web with the competition attached, CPU, Internet Off and Save & Run All; retrieve its compact JSON before Phase B.",
+  "peak_memory_bytes": null,
+  "phase1_pass": false,
+  "phase1_status": "BLOCKED",
+  "phase_a_status": "LOCAL_REVIEW_COMPLETE_KAGGLE_EXECUTION_PENDING",
+  "preserved_evidence": [
+    {
+      "path": "D:\\RSNA\\docs\\phase1_audit.md",
+      "sha256": "533f08dc9ddd8cbb382308a8f03b1b7230b786b840484e3dde9a9745aed0caaa",
+      "size_bytes": 16301,
+      "unchanged": true
+    },
+    {
+      "path": "D:\\RSNA\\docs\\data_manifest.md",
+      "sha256": "c6c901b94d01a967a241c59aa71aaac8669248a30832f77aff37e718af31f8be",
+      "size_bytes": 5182,
+      "unchanged": true
+    },
+    {
+      "path": "D:\\RSNA\\reports\\phase1_audit.json",
+      "sha256": "0ca552f6cf8590b5d98f69b6bb4937c0b56332efce3016b4959dc51ff8fa153f",
+      "size_bytes": 9444,
+      "unchanged": true
+    }
+  ],
+  "reference_git_commit": "de3b7d632cdcd01f4a618968ceda0d4c1c647108",
+  "runtime": {
+    "disk_free_bytes": 420106047488,
+    "disk_total_bytes": 473955299328,
+    "disk_volume_probe": "D:\\RSNA\\artifacts",
+    "gpu_status": "NOT_PROBED_CPU_ONLY_ACCESS_CHECK",
+    "package_versions": {
+      "nbformat": "5.11.1",
+      "numpy": "2.4.3",
+      "pandas": "2.3.3",
+      "pydicom": null,
+      "torch": "2.11.0"
+    },
+    "peak_memory_bytes": null,
+    "platform": "Windows",
+    "python_version": "3.14.3"
+  },
+  "schema": "rsna-knee-phase-a-rebuild-v1",
+  "source_notebook_docs_tests_bytes_excluding_this_report_and_generated_python_caches": 69264,
+  "test_used_for_model_development": false,
+  "training_started": false,
+  "workspace": "D:\\RSNA"
+}
