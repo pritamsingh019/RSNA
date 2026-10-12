@@ -31,7 +31,7 @@ The notebook has no saved outputs or execution counts. Source and bundle SHA-256
 2. Import the entire `notebooks/kaggle_audit.ipynb` file into a fresh notebook. For CSV inspection, import `notebooks/kaggle_audit_csv.ipynb` instead. Do not append cells from either file to the previous broken notebook.
 3. Attach the official competition input.
 4. Select CPU and Internet Off. Discovery needs no GPU.
-5. The generated configuration uses `/kaggle/input` and `/kaggle/working/rsna_audit`. Choose the generated file for the intended mode; no added or rearranged configuration cells are needed. Keep discovery-only mode until real-data CSV inspection is approved.
+5. The generated configuration uses `/kaggle/input` and `/kaggle/working/rsna_audit`. Choose the generated file for the intended mode; no added or rearranged configuration cells are needed. CSV inspection and the separate Phase B audit are now authorized.
 6. Save and run all cells from a clean session.
 7. Review the compact JSON result and logs. Missing, ambiguous, unsafe, or incomplete discovery must remain visible.
 8. Retain compact evidence after reviewing its contents.
@@ -47,3 +47,11 @@ Mounted inputs remain read-only. Outputs belong in `/kaggle/working`, not the in
 Discovery evidence is not a completed label, report, DICOM, leakage, runtime, or clinical audit. Approved CSV preflight will have separate coverage. The separate resource remains **GOLD_RESOURCE_NOT_LOCATED** unless authoritative provenance and contents are supplied and verified.
 
 The later offline inference bundle will require explicit checkpoints, codecs, target order, and clean runtime profiling. That bundle and a model submission notebook are outside this phase. Confirm live [execution requirements](https://www.kaggle.com/competitions/rsna-knee-abnormality-detection/overview/evaluation) before adopting them.
+
+## Phase B notebook
+
+Generate `notebooks/kaggle_phase_b_audit.ipynb` with `python scripts/build_phase_b_notebook.py`. Import the whole file into a fresh Kaggle notebook, attach only the official competition input, choose CPU / no accelerator and Internet Off, then Save and Run All. It has six ordered cells: introduction, verified embedded source, one validated configuration, CSV preflight, Phase B audit, and report write. No manual configuration-cell editing is required.
+
+The result is `/kaggle/working/rsna_audit/phase_b_<UTC>_<suffix>.json`. Review each check's PASS / FAIL / BLOCKED / NOT_ASSESSED status, actual sample counts and limits. If pydicom or a decoder is absent, retain the blocked evidence; do not install dependencies to make the audit pass. Header readability, sampled pixel success and notebook execution do not approve training. The attached visible test sample is not the hidden evaluation set.
+
+See [Phase B scope and limits](phase_b_audit.md) for exact coverage, regeneration and interpretation. The original two notebooks remain preflight-only and never decode DICOMs.

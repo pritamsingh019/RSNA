@@ -65,7 +65,8 @@ class AuditConfig:
             raise ConfigError("Invalid configuration override") from error
 
 
-def load_config(path: str | Path) -> AuditConfig:
+def _read_config_values(path: str | Path) -> dict:
+    """Shared bounded JSON reader; never discover environment or credentials."""
     def unique_pairs(pairs):
         values = {}
         for key, value in pairs:
@@ -95,4 +96,8 @@ def load_config(path: str | Path) -> AuditConfig:
         values = json.loads(raw.decode("utf-8-sig"), object_pairs_hook=unique_pairs)
     except (json.JSONDecodeError, UnicodeError) as error:
         raise ConfigError("Configuration must be valid UTF-8 JSON") from error
-    return AuditConfig.from_dict(values)
+    return values
+
+
+def load_config(path: str | Path) -> AuditConfig:
+    return AuditConfig.from_dict(_read_config_values(path))

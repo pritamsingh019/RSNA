@@ -2,7 +2,7 @@
 
 ## Evidence status
 
-These are synthetic software contracts, not verified competition measurements. Expected filenames and target names detect mismatches; they do not prove data access, integrity, or label quality.
+These contracts are tested with synthetic fixtures. The user reports successful Kaggle CSV validation (4,407 training studies, 24,371 series, all five manifests), with sparse labels and only 3 visible test studies / 15 series in that runtime. This repository does not contain the raw audit artifact or locally remeasure those inputs. Expected filenames and target names do not independently prove data integrity or label quality.
 
 ## Discovery and identities
 
@@ -63,7 +63,7 @@ The CLI writes unique `artifacts/preflight_<UTC>_<uuid>.json` results by default
 
 ## DICOM and gold resources
 
-This scaffold does not decode pixels, validate physical geometry, or certify image integrity. A later audit must measure syntax, photometric interpretation, transforms, orientations, positions, spacing, dimensions, and decoding failures before training eligibility is decided.
+Phase B implements bounded metadata inspection and at most twelve guarded pixel-decoding smoke tests using already installed pydicom. Actual syntax, photometric interpretation, transforms, orientation, position, spacing, dimensions and decoding failures remain unverified until Kaggle evidence is reviewed. Headers alone do not prove decoding works. Sampled success does not certify full image integrity or training eligibility. See [audit limits](phase_b_audit.md).
 
 The separate gold resource remains **GOLD_RESOURCE_NOT_LOCATED**. If supplied, verify exact source, path, size, checksum, observed study count, columns, annotation definitions, UID mapping, overlap, provenance, and usage terms. An expected count of 58 or a synthetic table establishes none of these.
 
