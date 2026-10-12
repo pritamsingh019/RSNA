@@ -50,14 +50,14 @@ def _canonical_json(value: Any) -> str:
     return json.dumps(value, sort_keys=True, ensure_ascii=True, separators=(",", ":"))
 
 
-def _source_bundle(source_root: Path) -> tuple[dict[str, str], dict[str, str]]:
+def _source_bundle(source_root: Path, modules: tuple[str, ...] = SOURCE_MODULES) -> tuple[dict[str, str], dict[str, str]]:
     package_root = safe_absolute(source_root)
     if not package_root.is_dir():
         raise ValueError("source_root must be the rsna_knee package directory")
     sources: dict[str, str] = {}
     hashes: dict[str, str] = {}
     total_bytes = 0
-    for module in SOURCE_MODULES:
+    for module in modules:
         path = safe_absolute(package_root / f"{module}.py")
         if path.is_symlink() or not path.is_file():
             raise ValueError(f"Required regular source file is missing: {module}.py")
@@ -93,23 +93,8 @@ def _cell(kind: str, cell_id: str, source: str) -> dict[str, Any]:
     return cell
 
 
-def build_notebook(source_root: Path, config: dict[str, Any] | None = None) -> dict[str, Any]:
-    """Return a deterministic, self-contained audit notebook as a JSON object.
-
-    ``source_root`` is the directory containing the reviewed package modules.
-    Configuration is validated with the same contract the notebook will use.
-    All required package sources must already exist; this builder never restores
-    missing files or discovers extra modules automatically.
-    """
-    from .config import AuditConfig
-
-    if config is not None and not isinstance(config, dict):
-        raise TypeError("config must be a dictionary or None")
-    settings = dict(DEFAULT_CONFIG)
-    if config is not None:
-        settings.update(config)
-    AuditConfig.from_dict(settings)
-    sources, hashes = _source_bundle(source_root)
+def embedded_loader_source(sources: dict[str, str], hashes: dict[str, str], package_name: str, import_lines: str) -> str:
+    """Share the verified, idempotent in-memory loader across audit notebooks."""
     bundle_json = _canonical_json({"sources": sources, "sha256": hashes})
     loader = f'''# Reviewed source bundle: no filesystem extraction or network access.
 import hashlib
@@ -119,7 +104,7 @@ import json
 import sys
 
 _RSNA_BUNDLE = json.loads({bundle_json!r})
-_RSNA_PACKAGE = {PACKAGE_NAME!r}
+_RSNA_PACKAGE = {package_name!r}
 for _module, _source in _RSNA_BUNDLE["sources"].items():
     _actual = hashlib.sha256(_source.encode("utf-8")).hexdigest()
     if _actual != _RSNA_BUNDLE["sha256"][_module + ".py"]:
@@ -175,9 +160,29 @@ if not _rsna_same_bundle:
         del sys.modules[_name]
     sys.meta_path[:] = [finder for finder in sys.meta_path if getattr(finder, "package_name", None) != _RSNA_PACKAGE]
     sys.meta_path.insert(0, _RsnaBundleLoader(_RSNA_BUNDLE["sources"], _rsna_fingerprint))
-from rsna_knee_bundle.config import AuditConfig
-from rsna_knee_bundle.audit import run_preflight, write_report
-'''
+{import_lines}'''
+    return loader
+
+
+def build_notebook(source_root: Path, config: dict[str, Any] | None = None) -> dict[str, Any]:
+    """Return a deterministic, self-contained audit notebook as a JSON object.
+
+    ``source_root`` is the directory containing the reviewed package modules.
+    Configuration is validated with the same contract the notebook will use.
+    All required package sources must already exist; this builder never restores
+    missing files or discovers extra modules automatically.
+    """
+    from .config import AuditConfig
+
+    if config is not None and not isinstance(config, dict):
+        raise TypeError("config must be a dictionary or None")
+    settings = dict(DEFAULT_CONFIG)
+    if config is not None:
+        settings.update(config)
+    AuditConfig.from_dict(settings)
+    sources, hashes = _source_bundle(source_root)
+    bundle_json = _canonical_json({"sources": sources, "sha256": hashes})
+    loader = embedded_loader_source(sources, hashes, PACKAGE_NAME, "from rsna_knee_bundle.config import AuditConfig\nfrom rsna_knee_bundle.audit import run_preflight, write_report\n")
     # Python literals, rather than JSON booleans/null, keep this an editable cell.
     settings_code = "# Generated configuration. Use the project builder to change settings.\nCONFIG = " + pprint.pformat(settings, sort_dicts=True)
     settings_code += "\naudit_config = AuditConfig.from_dict(CONFIG)\n"
@@ -244,7 +249,7 @@ def notebook_bytes(notebook: dict[str, Any]) -> bytes:
     return (json.dumps(notebook, sort_keys=True, ensure_ascii=True, indent=2) + "\n").encode("utf-8")
 
 
-def _is_generated_notebook(value: Any) -> bool:
+def _is_generated_notebook(value: Any, package_name: str = PACKAGE_NAME, modules: tuple[str, ...] = SOURCE_MODULES) -> bool:
     """Recognize our notebook format without requiring an optional dependency."""
     if not isinstance(value, dict) or value.get("nbformat") != 4:
         return False
@@ -254,10 +259,10 @@ def _is_generated_notebook(value: Any) -> bool:
     if not isinstance(metadata, dict):
         return False
     bundle = metadata.get("rsna_audit_bundle")
-    if not isinstance(bundle, dict) or bundle.get("format_version") != 1 or bundle.get("package_name") != PACKAGE_NAME:
+    if not isinstance(bundle, dict) or bundle.get("format_version") != 1 or bundle.get("package_name") != package_name:
         return False
     hashes = bundle.get("source_sha256")
-    if not isinstance(hashes, dict) or set(hashes) != {module + ".py" for module in SOURCE_MODULES}:
+    if not isinstance(hashes, dict) or set(hashes) != {module + ".py" for module in modules}:
         return False
     for digest in (*hashes.values(), bundle.get("bundle_sha256")):
         if not isinstance(digest, str) or len(digest) != 64 or any(character not in "0123456789abcdef" for character in digest):
@@ -279,7 +284,7 @@ def _is_generated_notebook(value: Any) -> bool:
     return True
 
 
-def _existing_generated_bytes(path: Path) -> bytes:
+def _existing_generated_bytes(path: Path, recognize=_is_generated_notebook) -> bytes:
     if not path.is_file():
         raise InputError("Notebook output must be a regular file")
     with path.open("rb") as stream:
@@ -290,12 +295,12 @@ def _existing_generated_bytes(path: Path) -> bytes:
         value = json.loads(raw)
     except (ValueError, UnicodeError):
         raise InputError("Refusing to replace an unrecognized existing notebook") from None
-    if not _is_generated_notebook(value):
+    if not recognize(value):
         raise InputError("Refusing to replace an unrelated existing notebook")
     return raw
 
 
-def write_notebook(notebook: dict[str, Any], path: Path, output_root: Path | None = None) -> Path:
+def write_generated_notebook(notebook: dict[str, Any], path: Path, output_root: Path | None = None, *, recognize=_is_generated_notebook, validate=validate_notebook_layout) -> Path:
     """Write inside the declared notebook directory, protecting existing files.
 
     Only a recognized generated audit notebook may be replaced. Every path and
@@ -309,13 +314,13 @@ def write_notebook(notebook: dict[str, Any], path: Path, output_root: Path | Non
         raise InputError("Notebook output must be inside the declared notebooks directory")
     if output.suffix.casefold() != ".ipynb":
         raise InputError("Notebook output must have the .ipynb extension")
-    if not _is_generated_notebook(notebook):
+    if not recognize(notebook):
         raise InputError("Output must be a generated RSNA audit notebook")
-    validate_notebook_layout(notebook)
+    validate(notebook)
     payload = notebook_bytes(notebook)
     if len(payload) > MAX_NOTEBOOK_BYTES:
         raise InputError("Notebook exceeds the output size limit")
-    original = _existing_generated_bytes(output) if output.exists() else None
+    original = _existing_generated_bytes(output, recognize) if output.exists() else None
     output.parent.mkdir(parents=True, exist_ok=True)
     safe_absolute(output)
     if original is None:
@@ -329,7 +334,7 @@ def write_notebook(notebook: dict[str, Any], path: Path, output_root: Path | Non
             temporary_path = Path(stream.name)
             stream.write(payload)
         safe_absolute(output)
-        if _existing_generated_bytes(output) != original:
+        if _existing_generated_bytes(output, recognize) != original:
             raise InputError("Existing notebook changed during generation; refusing replacement")
         os.replace(temporary_path, output)
         temporary_path = None
@@ -337,3 +342,8 @@ def write_notebook(notebook: dict[str, Any], path: Path, output_root: Path | Non
         if temporary_path is not None:
             temporary_path.unlink(missing_ok=True)
     return output
+
+
+def write_notebook(notebook: dict[str, Any], path: Path, output_root: Path | None = None) -> Path:
+    """Write the original five-cell preflight using shared safe output handling."""
+    return write_generated_notebook(notebook, path, output_root)

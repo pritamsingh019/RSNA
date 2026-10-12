@@ -4,6 +4,8 @@
 
 Synthetic tests validate software behavior. No competition split, training run, reference set, or model score has been established. This protocol defines gates before model development.
 
+The user reports 58 observed labels with both classes and 4,349 unknown labels per target in the successful Kaggle CSV audit. Phase B recomputes exact positive/negative support without changing masks. Necessary two/three-fold support does not prove joint feasibility; tiny exact class-coverage diagnostics are not approved splits. Dataset-wide patient grouping and an independent gold resource remain unresolved. Sparse labels may prevent a reliable twelve-target validation estimate; validation design must be reviewed before training. See [Phase B audit](phase_b_audit.md).
+
 ## Labels and metrics
 
 Reference AUC uses verified observed labels only. Missing labels are unknown. Future agreement with a report teacher is a separate diagnostic and cannot substitute for independent image-model evaluation.
