@@ -1,0 +1,12 @@
+{
+  "input_base": "data",
+  "output_dir": "artifacts",
+  "data_root": null,
+  "inspect_csv": false,
+  "max_depth": 2,
+  "max_directories": 128,
+  "max_entries": 2048,
+  "max_file_bytes": 8388608,
+  "max_csv_rows": 100000,
+  "max_report_bytes": 1048576
+}

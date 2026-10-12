@@ -1,36 +1,126 @@
 # RSNA Knee Abnormality Detection
 
-Compact rebuild, currently **Phase A: repository and data-access audit**. No local competition inputs, usable checkpoints, or measured model scores are available. Full data stays on Kaggle; local development uses source code and small synthetic fixtures. The old acquisition reports remain historical evidence dated 2026-10-06.
+An experimental MRI project for sparse-label learning and reproducible Kaggle inference.
 
-## Start here
+## Project status
 
-- [Cleanup inventory](docs/cleanup_inventory.md): proposed removals await review; no files deleted.
-- [Phase A report](docs/phase_a_rebuild.md): current evidence, checks, limitations, and next action.
-- [Kaggle browser workflow](docs/kaggle_workflow.md): manual access and offline execution.
-- [Uploadable access-check notebook](notebooks/kaggle_access_check.ipynb): self-contained, CPU-only Phase A input discovery.
+**Initial scaffold.** The project provides validated configuration, bounded input discovery, explicit data and label contracts, synthetic checks, and a self-contained Kaggle audit notebook. Competition access, dataset contents, decoding feasibility, and gold-resource provenance remain unverified. No model has been trained, no pretrained weights have been adopted, and no performance results are available.
 
-## Local reproduction
+This rebuild is on `rebuild/clean-slate`. Historical working-tree deletions remain part of the rebuild; the previous implementation has not been restored. The verified recovery backup is `D:\RSNA_backup_before_reset_20261012_104506`. GitHub `main` remains unchanged.
 
-Python 3.10 or newer is sufficient for Phase A; no package installation or authenticated Kaggle CLI is required. From the repository root:
+This project is **not clinically validated** and is not intended for diagnosis or clinical decisions.
+
+## Start locally
+
+Use Python 3.10 or later from the repository root. The scaffold uses the Python standard library. Synthetic checks need no package installation, competition files, Kaggle credentials, GPU, or internet access.
 
 ```powershell
-python -m unittest discover -s tests -v
-python scripts/build_notebook.py
-python -m rsna_knee.data_access --input-base data/raw --output-dir artifacts
+python scripts/check_scaffold.py
+python scripts/audit.py --config configs/audit.json
+python scripts/build_audit_notebook.py
 ```
 
-The local access command saves a small JSON artifact and returns exit code 2 when required manifests are missing, ambiguous, or discovery is incomplete. It does not download files, read credentials, decode images, or fit anything. This repository currently has no input data, so a missing-input result is expected. Treat any detected filenames as presence evidence only.
+The audit defaults to discovery only. Missing local competition files produce an explicit incomplete result and nonzero exit status. Results are written to unique JSON files under `artifacts/`. A valid synthetic check or notebook does not establish that competition inputs passed an audit.
 
-Rebuild the generated notebook whenever `rsna_knee/data_access.py` changes. It embeds that module and records its SHA-256; the notebook requires no repository attachment or internet connection. On Kaggle, the default source is `/kaggle/input` and the output is `/kaggle/working/rsna_audit`. If multiple attachments contain the five manifests, set `DATA_ROOT` explicitly from the displayed input path.
+Review [data contracts](docs/data_contract.md) and [Kaggle execution](docs/kaggle.md) before using attached inputs. Real-data analysis, model development, and external assets require further approval.
 
-## Work gates
+The [initial scaffold review](docs/scaffold_review.md) records the actual local validation: 80 tests passed and one native symlink test was skipped. This is software evidence on synthetic fixtures; it is not a dataset or model result.
 
-| Phase | Current state | Required evidence before advancing |
+## Architecture
+
+The implemented scaffold establishes auditable boundaries for later experiments.
+
+```mermaid
+flowchart LR
+    A[Validated configuration] --> B[Bounded input discovery]
+    B --> C[Source identity and inventory]
+    C --> D[Optional CSV preflight]
+    D --> E[Schema and reference checks]
+    D --> F[Labels and observation masks]
+    E --> G[Explicit audit evidence]
+    F --> G
+    H[Synthetic fixtures] --> B
+    H --> D
+    I[Standalone notebook builder] --> J[Offline Kaggle audit entry point]
+    J --> B
+```
+
+The later image-model architecture remains a proposal, conditional on real-data and validation gates.
+
+```mermaid
+flowchart LR
+    A[DICOM series and metadata] --> B[Decode and validate geometry]
+    B --> C[Physical slice or window sampling]
+    C --> D[Compact image encoder]
+    D --> E[Study pooling]
+    E --> F[Twelve prediction heads]
+    F --> G[Twelve probabilities]
+```
+
+## Workflow and approval gates
+
+```mermaid
+flowchart LR
+    A[Initial scaffold] --> B[Approved real-data audit]
+    B --> C[Verified labels and frozen splits]
+    C --> D[Approved model development]
+    D --> E[Training and OOF evidence]
+    E --> F[Candidate selection]
+    F --> G[Offline inference bundle]
+    G --> H[Schema and runtime verification]
+    H --> I[submission.csv]
+```
+
+Only the initial scaffold is implemented. No real-data analysis, validation splits, image decoding, models, checkpoints, or submission inference have been produced. The submission validator checks a supplied probability table; it does not generate predictions.
+
+## Repository guide
+
+| Location | Purpose |
+|---|---|
+| `src/rsna_knee/` | Configuration, discovery, contracts, preflight, metric and submission checks |
+| `configs/audit.json` | Conservative discovery configuration |
+| `scripts/` | Local checks, preflight entry point, deterministic notebook generation |
+| `tests/` | Small synthetic fixtures and regression checks |
+| `notebooks/kaggle_audit.ipynb` | Generated notebook with cleared execution state |
+| [Architecture](docs/architecture.md) | Module boundaries and future gates |
+| [Data contract](docs/data_contract.md) | Identifiers, labels, paths, source identity, and coverage |
+| [Validation protocol](docs/validation_protocol.md) | Undefined metrics and leakage protections |
+| [Kaggle workflow](docs/kaggle.md) | Browser execution of the self-contained notebook |
+| [Asset registry](docs/asset_registry.md) | External-asset status and approval requirements |
+
+Keep datasets, DICOMs, credentials, environment secrets, caches, checkpoints, virtual environments, and large artifacts out of Git. Source inputs remain immutable. Review compact evidence before retaining it deliberately.
+
+## Results
+
+No dataset measurements or model metrics have been established. These target names form the planned contract and must be compared with the actual competition CSVs.
+
+| Target | Validation positives / negatives | ROC AUC |
 |---|---|---|
-| A: repository and access | Local review completed; browser access unverified | Review cleanup inventory and run the access-check notebook with competition input attached |
-| B: input/schema audit | Pending; implementation deferred | Actual CSV schemas, label coverage/co-occurrence, report availability/quality, series inventory, metadata/decoding/UID integrity, and submission schema |
-| C: labels and splits | Pending | Distinguish missing labels from negatives; patient/study leakage check; documented gold provenance if available |
-| D: inexpensive baseline | Pending | Reviewed label/split audit and compute budget |
-| E–G: experiments, selection, submission | Pending | Measured fold AUC and per-target counts, reproducibility, offline runtime, clean saved execution, exact submission validation and fallback |
+| ACL | Not measured | — |
+| MCL | Not measured | — |
+| Medial Meniscus | Not measured | — |
+| Lateral Meniscus | Not measured | — |
+| Medial OA | Not measured | — |
+| Lateral OA | Not measured | — |
+| PF OA | Not measured | — |
+| Effusion | Not measured | — |
+| Synovitis | Not measured | — |
+| Baker's | Not measured | — |
+| Contusion | Not measured | — |
+| Fracture | Not measured | — |
+| **Macro across all twelve** | **Not measured** | **Not measured** |
 
-Model selection will use validation evidence. External weights/data require competition-rule and provenance review plus explicit approval before adoption. Test reports and hidden targets must not be used. No complete local dataset download, cloud purchase, Git commit, or competition submission is part of Phase A.
+## Current limitations
+
+- Account access, rules acceptance, attached inputs, and current execution restrictions are unverified.
+- Synthetic checks cannot establish real dataset integrity, label quality, DICOM compatibility, or clinical validity.
+- Input scans are bounded. Missing inputs, ambiguous roots, unsafe paths, and incomplete coverage must stay visible.
+- The separate gold resource remains **GOLD_RESOURCE_NOT_LOCATED**. An expected study count is not evidence of its existence.
+- Patient identity, target support, report quality, storage, runtime, and GPU budget require real measurements.
+- The notebook defaults to discovery. Training, downloads, network requests, and pretrained assets are outside this phase.
+
+## References and provenance
+
+The competition is [RSNA Knee Abnormality Detection](https://www.kaggle.com/competitions/rsna-knee-abnormality-detection). Check its [data page](https://www.kaggle.com/competitions/rsna-knee-abnormality-detection/data) and [evaluation page](https://www.kaggle.com/competitions/rsna-knee-abnormality-detection/overview/evaluation) in an authenticated browser before relying on live rules or access.
+
+The Mermaid diagrams were written for this rebuild. No external visual assets, datasets, teachers, or pretrained weights are included. A repository code license has not been selected; competition data and any future external assets retain separate usage terms.

@@ -1,23 +1,47 @@
-__pycache__/
-*.py[cod]
-.pytest_cache/
-.ipynb_checkpoints/
-.venv/
-venv/
+# Secrets and local account settings
 .env
 .env.*
 .aws/
 .kaggle/
 kaggle.json
 access_token
+credentials
 *.pem
 *.key
+
+# Local runtime/dependencies
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.ipynb_checkpoints/
+.venv/
+venv/
+node_modules/
+*.egg-info/
+build/
+dist/
+
+# Source data and generated outputs
+data/
 artifacts/
-data/raw/*
-!data/raw/.gitkeep
-data/cache/*
-!data/cache/.gitkeep
+outputs/
+checkpoints/
+cache/
+*.dcm
+*.dicom
 *.pt
 *.pth
 *.ckpt
 *.safetensors
+*.onnx
+*.npz
+*.npy
+*.parquet
+*.zip
+*.tar
+*.gz
+*.7z
+
+# Reviewed, output-free notebooks may be committed.
