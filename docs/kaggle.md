@@ -55,3 +55,9 @@ Generate `notebooks/kaggle_phase_b_audit.ipynb` with `python scripts/build_phase
 The result is `/kaggle/working/rsna_audit/phase_b_<UTC>_<suffix>.json`. Review each check's PASS / FAIL / BLOCKED / NOT_ASSESSED status, actual sample counts and limits. If pydicom or a decoder is absent, retain the blocked evidence; do not install dependencies to make the audit pass. Header readability, sampled pixel success and notebook execution do not approve training. The attached visible test sample is not the hidden evaluation set.
 
 See [Phase B scope and limits](phase_b_audit.md) for exact coverage, regeneration and interpretation. The original two notebooks remain preflight-only and never decode DICOMs.
+
+## Phase C report audit
+
+Generate `notebooks/kaggle_phase_c_report_audit.ipynb` with `python scripts/build_phase_c_notebook.py`. Import the whole generated file into a fresh notebook, attach only official competition inputs, choose CPU/no accelerator and Internet Off, then Run All. The six-cell source verifies its bundle, creates a single validated configuration, performs CSV preflight, runs report aggregation/frozen rules/masked agreement/validation diagnostics, and writes compact aggregate JSON under `/kaggle/working/rsna_audit/`.
+
+Actual report agreement is pending execution. Results remain EXPLORATORY, with explicit denominators, Wilson intervals, abstentions and patient-grouping limitations. No DICOMs are read or decoded, raw reports/IDs/per-study candidates are never emitted, and training readiness stays false. See [Phase C supervision and leakage design](phase_c_report_supervision.md) before using its evidence.

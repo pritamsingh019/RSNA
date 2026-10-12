@@ -4,11 +4,11 @@ An experimental MRI project for sparse-label learning and reproducible Kaggle in
 
 ## Project status
 
-**Reviewed Phase B audit implementation, awaiting Kaggle evidence.** The project provides validated configuration, CSV and label contracts, bounded series-directory discovery, sampled DICOM headers and decoding smoke tests, report-quality aggregates, validation-support diagnostics, and self-contained offline audit notebooks. No model has been trained, no pretrained weights have been adopted, and no performance results are available.
+**Reviewed Phase C implementation, awaiting real report-agreement evidence.** The project provides validated configuration, CSV and label contracts, bounded DICOM audits, frozen tri-state report rules, masked aggregate agreement with confidence intervals, validation-design safeguards, and self-contained offline notebooks. No model has been trained, no pretrained weights have been adopted, and no model-performance results are available.
 
-The scaffold and corrected preflight notebooks were merged at `2f7ff41`. The reviewed Phase B implementation is maintained separately on `phase-b/dicom-audit`. The historical recovery backup is `D:\RSNA_backup_before_reset_20261012_104506`.
+Phase A and Phase B are merged into `main` at `5a6fcfe`. The reviewed Phase C implementation is maintained separately on `phase-c/report-supervision-audit`. The historical recovery backup is `D:\RSNA_backup_before_reset_20261012_104506`.
 
-The user confirmed a successful Kaggle CSV audit with Internet disabled and no accelerator: 4,407 training studies, 24,371 training series, and 3 visible test studies with 15 series. All five manifests were read, all training reports were nonempty, and no CSV study/series overlap was reported. Each target had 58 observed labels (both classes) and 4,349 unknown labels. These are user-supplied runtime observations, not local remeasurements; the three visible test studies are not the complete hidden evaluation set. Actual DICOM compatibility, report quality, patient mapping, and gold provenance remain unverified.
+The user confirmed successful CPU / Internet Off Kaggle CSV and bounded DICOM audits: 4,407 training studies with nonempty reports; 24,371 training series and matching directories; 15 visible test-series directories; 128 sampled headers and 12 pixel smoke tests successful. There are 58 observed-label studies, 696 observed target cells and 52,188 unknown cells. These are user-supplied runtime observations, not local remeasurements. The three visible test studies are not the complete hidden evaluation set. Full DICOM integrity, trustworthy dataset-wide patient grouping, independent gold provenance, report-rule reliability and reliable twelve-target validation remain unverified.
 
 This project is **not clinically validated** and is not intended for diagnosis or clinical decisions.
 
@@ -22,11 +22,12 @@ python scripts/audit.py --config configs/audit.json
 python scripts/build_audit_notebook.py
 python scripts/build_audit_notebook.py --inspect-csv --output notebooks/kaggle_audit_csv.ipynb
 python scripts/build_phase_b_notebook.py
+python scripts/build_phase_c_notebook.py
 ```
 
 The audit defaults to discovery only. Missing local competition files produce an explicit incomplete result and nonzero exit status. Results are written to unique JSON files under `artifacts/`. A valid synthetic check or notebook does not establish that competition inputs passed an audit.
 
-Review [data contracts](docs/data_contract.md), [Kaggle execution](docs/kaggle.md), and the [Phase B audit scope](docs/phase_b_audit.md) before using attached inputs. Phase B is an approved read-only audit; validation design, models, training, weak labels, and external assets require separate review.
+Review [data contracts](docs/data_contract.md), [Kaggle execution](docs/kaggle.md), [Phase B scope](docs/phase_b_audit.md), and [Phase C report supervision](docs/phase_c_report_supervision.md). Phase C evaluates separate report candidates without modifying reference labels. Training, approved splits, external assets and future weak-supervision use require further review.
 
 The [initial scaffold review](docs/scaffold_review.md) records the actual local validation: 80 tests passed and one native symlink test was skipped. This is software evidence on synthetic fixtures; it is not a dataset or model result.
 
@@ -102,6 +103,7 @@ flowchart LR
 | `notebooks/kaggle_audit.ipynb` | Generated notebook with cleared execution state |
 | `notebooks/kaggle_audit_csv.ipynb` | Generated CSV preflight notebook |
 | `notebooks/kaggle_phase_b_audit.ipynb` | Generated read-only series, report, DICOM and validation audit |
+| `notebooks/kaggle_phase_c_report_audit.ipynb` | Frozen report-candidate agreement and prospective validation design |
 | [Architecture](docs/architecture.md) | Module boundaries and future gates |
 | [Data contract](docs/data_contract.md) | Identifiers, labels, paths, source identity, and coverage |
 | [Validation protocol](docs/validation_protocol.md) | Undefined metrics and leakage protections |
@@ -112,7 +114,7 @@ Keep datasets, DICOMs, credentials, environment secrets, caches, checkpoints, vi
 
 ## Results
 
-The Kaggle CSV observations above establish sparse support, not a reliable validation estimate. Per-class support will be recomputed by Phase B from the verified CSV contracts. No validation metrics or model metrics have been measured.
+The Kaggle evidence establishes sparse support and sampled decoding success. Phase C will measure exploratory report-rule agreement on observed cells only, with denominators and Wilson intervals; actual agreement is pending the Kaggle run. No model metrics or independent validation estimates have been measured.
 
 | Target | Validation positives / negatives | ROC AUC |
 |---|---|---|
@@ -132,12 +134,12 @@ The Kaggle CSV observations above establish sparse support, not a reliable valid
 
 ## Current limitations
 
-- The supplied CSV evidence describes one Kaggle runtime; current DICOM and codec compatibility still need that runtime's Phase B output.
+- The supplied evidence describes one Kaggle runtime and bounded image samples; it does not establish full DICOM integrity or comprehensive codec support.
 - Synthetic checks cannot establish real dataset integrity, label quality, DICOM compatibility, or clinical validity.
 - Input scans are bounded. Missing inputs, ambiguous roots, unsafe paths, and incomplete coverage must stay visible.
 - The separate gold resource remains **GOLD_RESOURCE_NOT_LOCATED**. An expected study count is not evidence of its existence.
-- Patient identity, per-class validation support, report quality and DICOM metadata need real Phase B evidence. Sampling cannot establish full dataset integrity or a trustworthy dataset-wide patient map.
-- The original notebook defaults to discovery; the new Phase B notebook enables CSV checks and bounded image smoke tests. Training, downloads, network requests and pretrained assets are outside this phase.
+- Patient identity, report-rule reliability and simultaneous validation support remain unresolved. English pattern coverage and script heuristics are limited; unknown candidates and true labels remain masked.
+- The original notebook defaults to discovery; Phase B samples images; Phase C reads CSVs and reports only. Training, downloads, network requests and pretrained assets are outside these notebooks.
 
 ## References and provenance
 
