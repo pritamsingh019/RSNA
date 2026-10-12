@@ -6,6 +6,7 @@ It neither extracts source files nor imports code from the checkout at runtime.
 
 from __future__ import annotations
 
+import ast
 import hashlib
 import json
 import os
@@ -36,6 +37,13 @@ DEFAULT_CONFIG = {
 MAX_SOURCE_BYTES = 512 * 1024
 MAX_BUNDLE_BYTES = 2 * 1024 * 1024
 MAX_NOTEBOOK_BYTES = 8 * 1024 * 1024
+CELL_LAYOUT = (
+    ("audit-overview", "markdown"),
+    ("embedded-package", "code"),
+    ("audit-settings", "code"),
+    ("run-preflight", "code"),
+    ("write-evidence", "code"),
+)
 
 
 def _canonical_json(value: Any) -> str:
@@ -125,13 +133,18 @@ _RSNA_SOURCE_IDENTITY = {{
 class _RsnaBundleLoader(importlib.abc.MetaPathFinder, importlib.abc.Loader):
     package_name = _RSNA_PACKAGE
 
+    def __init__(self, sources, fingerprint):
+        # Bind this loader to its own bundle, not mutable notebook globals.
+        self.sources = dict(sources)
+        self.fingerprint = fingerprint
+
     def find_spec(self, fullname, path=None, target=None):
         if fullname == self.package_name:
             return importlib.util.spec_from_loader(fullname, self, is_package=True)
         prefix = self.package_name + "."
         if fullname.startswith(prefix):
             name = fullname[len(prefix):]
-            if name in _RSNA_BUNDLE["sources"] and name != "__init__":
+            if name in self.sources and name != "__init__":
                 return importlib.util.spec_from_loader(fullname, self)
         return None
 
@@ -141,20 +154,32 @@ class _RsnaBundleLoader(importlib.abc.MetaPathFinder, importlib.abc.Loader):
     def exec_module(self, module):
         name = "__init__" if module.__name__ == self.package_name else module.__name__.split(".")[-1]
         module.__file__ = "<embedded:" + name + ".py>"
-        code = compile(_RSNA_BUNDLE["sources"][name], module.__file__, "exec")
+        module.__rsna_bundle_sha256__ = self.fingerprint
+        code = compile(self.sources[name], module.__file__, "exec")
         exec(code, module.__dict__)
 
-# Re-running this cell loads exactly this bundle, even in a used kernel.
-for _name in tuple(sys.modules):
-    if _name == _RSNA_PACKAGE or _name.startswith(_RSNA_PACKAGE + "."):
+# Preserve class identity when re-running an identical, verified bundle.
+# Changed sources are reloaded and require the configuration cell to run again.
+_rsna_fingerprint = _RSNA_SOURCE_IDENTITY["bundle_sha256"]
+_rsna_cached = {{
+    name: module for name, module in sys.modules.items()
+    if name == _RSNA_PACKAGE or name.startswith(_RSNA_PACKAGE + ".")
+}}
+_rsna_same_bundle = (
+    _RSNA_PACKAGE in _rsna_cached
+    and all(getattr(module, "__rsna_bundle_sha256__", None) == _rsna_fingerprint
+            for module in _rsna_cached.values())
+)
+if not _rsna_same_bundle:
+    for _name in _rsna_cached:
         del sys.modules[_name]
-sys.meta_path[:] = [finder for finder in sys.meta_path if getattr(finder, "package_name", None) != _RSNA_PACKAGE]
-sys.meta_path.insert(0, _RsnaBundleLoader())
+    sys.meta_path[:] = [finder for finder in sys.meta_path if getattr(finder, "package_name", None) != _RSNA_PACKAGE]
+    sys.meta_path.insert(0, _RsnaBundleLoader(_RSNA_BUNDLE["sources"], _rsna_fingerprint))
 from rsna_knee_bundle.config import AuditConfig
 from rsna_knee_bundle.audit import run_preflight, write_report
 '''
     # Python literals, rather than JSON booleans/null, keep this an editable cell.
-    settings_code = "# Edit this dictionary for your attached inputs and output location.\nCONFIG = " + pprint.pformat(settings, sort_dicts=True)
+    settings_code = "# Generated configuration. Use the project builder to change settings.\nCONFIG = " + pprint.pformat(settings, sort_dicts=True)
     settings_code += "\naudit_config = AuditConfig.from_dict(CONFIG)\n"
     notebook = {
         "nbformat": 4,
@@ -170,14 +195,48 @@ from rsna_knee_bundle.audit import run_preflight, write_report
             },
         },
         "cells": [
-            _cell("markdown", "audit-overview", "# RSNA input audit\n\nThis notebook contains the reviewed Python audit sources and uses the standard library only. Attach competition inputs, keep Internet Off, and run the cells in order. No CLI authentication or package installation is needed.\n\nThe default run discovers input structure with bounded traversal. Enable `inspect_csv` only to inspect the declared CSV contracts; this notebook does not decode DICOMs or train models. Synthetic checks of this notebook do not verify competition access, actual data, or model performance.\n"),
+            _cell("markdown", "audit-overview", "# RSNA input audit\n\nThis notebook contains the reviewed Python audit sources and uses the standard library only. Attach competition inputs, keep Internet Off, and Run All. No CLI authentication or package installation is needed.\n\nThe default run discovers input structure with bounded traversal. Generate a CSV-inspection variant locally with `python scripts/build_audit_notebook.py --inspect-csv --output notebooks/kaggle_audit_csv.ipynb`; import that complete file instead of adding cells. This notebook does not decode DICOMs or train models. Synthetic checks do not verify competition access, actual data, or model performance.\n"),
             _cell("code", "embedded-package", loader),
             _cell("code", "audit-settings", settings_code),
-            _cell("code", "run-preflight", "audit_report = run_preflight(audit_config, source_identity=_RSNA_SOURCE_IDENTITY)\nprint(json.dumps(audit_report, sort_keys=True, indent=2))\n"),
-            _cell("code", "write-evidence", "report_path = write_report(audit_report, audit_config)\nprint(str(report_path))\n"),
+            _cell("code", "run-preflight", "if 'audit_config' not in globals() or not isinstance(audit_config, AuditConfig):\n"
+                  "    raise RuntimeError('Missing or stale AuditConfig: rerun the configuration cell before the audit, or use Run All.')\n"
+                  "audit_report = run_preflight(audit_config, source_identity=_RSNA_SOURCE_IDENTITY)\nprint(json.dumps(audit_report, sort_keys=True, indent=2))\n"),
+            _cell("code", "write-evidence", "if 'audit_report' not in globals() or 'audit_config' not in globals() or not isinstance(audit_config, AuditConfig):\n"
+                  "    raise RuntimeError('Run the configuration and audit cells first, or use Run All.')\n"
+                  "if audit_report.get('source_identity') != _RSNA_SOURCE_IDENTITY or audit_report.get('configuration') != audit_config.to_dict():\n"
+                  "    raise RuntimeError('The audit report is stale; run the configuration and audit cells again, or use Run All.')\n"
+                  "report_path = write_report(audit_report, audit_config)\nprint(str(report_path))\n"),
         ],
     }
+    validate_notebook_layout(notebook)
     return notebook
+
+
+def validate_notebook_layout(notebook: dict[str, Any]) -> None:
+    """Enforce the generated execution order and one validated configuration cell."""
+    cells = notebook.get("cells", [])
+    if tuple((cell.get("id"), cell.get("cell_type")) for cell in cells) != CELL_LAYOUT:
+        raise InputError("Audit notebook must contain exactly the five ordered generated cells")
+    assignments = {"CONFIG": [], "audit_config": []}
+    for cell in cells:
+        if cell["cell_type"] != "code":
+            continue
+        source = cell["source"]
+        tree = ast.parse(source if isinstance(source, str) else "".join(source))
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Assign):
+                for target in node.targets:
+                    if isinstance(target, ast.Name) and target.id in assignments:
+                        assignments[target.id].append((cell["id"], node.value))
+    if any(len(values) != 1 or values[0][0] != "audit-settings" for values in assignments.values()):
+        raise InputError("Audit notebook requires one configuration cell before execution")
+    factory = assignments["audit_config"][0][1]
+    if not (isinstance(factory, ast.Call) and isinstance(factory.func, ast.Attribute)
+            and isinstance(factory.func.value, ast.Name) and factory.func.value.id == "AuditConfig"
+            and factory.func.attr == "from_dict" and len(factory.args) == 1
+            and isinstance(factory.args[0], ast.Name) and factory.args[0].id == "CONFIG"
+            and not factory.keywords):
+        raise InputError("Configuration must construct AuditConfig.from_dict(CONFIG)")
 
 
 def notebook_bytes(notebook: dict[str, Any]) -> bytes:
@@ -252,6 +311,7 @@ def write_notebook(notebook: dict[str, Any], path: Path, output_root: Path | Non
         raise InputError("Notebook output must have the .ipynb extension")
     if not _is_generated_notebook(notebook):
         raise InputError("Output must be a generated RSNA audit notebook")
+    validate_notebook_layout(notebook)
     payload = notebook_bytes(notebook)
     if len(payload) > MAX_NOTEBOOK_BYTES:
         raise InputError("Notebook exceeds the output size limit")

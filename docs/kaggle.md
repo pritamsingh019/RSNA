@@ -13,22 +13,32 @@ python scripts/check_scaffold.py
 python scripts/build_audit_notebook.py
 ```
 
-The builder writes `notebooks/kaggle_audit.ipynb`. Optional `--output` selects another `.ipynb` path within the project's `notebooks/` directory. It rejects protected or linked paths and preserves unrelated existing notebooks; only a recognizable generated audit notebook may be replaced. Optional `--config` loads a validated audit configuration; it does not merge a partial file into Kaggle defaults. Omitted paths in that file take the local `data` and `artifacts` defaults. Use the default builder command for Kaggle, edit the generated `CONFIG` cell, or provide explicit Kaggle input/output paths in a separate configuration.
+The builder writes `notebooks/kaggle_audit.ipynb`. Optional `--output` selects another `.ipynb` path within the project's `notebooks/` directory. It rejects protected or linked paths and preserves unrelated existing notebooks; only a recognizable generated audit notebook may be replaced. Optional `--config` loads a validated project JSON configuration; it does not merge a partial file into Kaggle defaults. Omitted paths in that file take the local `data` and `artifacts` defaults. Use the default builder command for Kaggle or provide explicit Kaggle input/output paths through a project configuration and regenerate the complete notebook.
+
+Notebook-cell editing is unnecessary. Generate a CSV-inspection notebook through the project source:
+
+```powershell
+python scripts/build_audit_notebook.py --inspect-csv --output notebooks/kaggle_audit_csv.ipynb
+```
+
+`--inspect-csv` overrides the JSON configuration to true; `--no-inspect-csv` overrides it to false. The normal builder command retains discovery-only defaults. Both versions contain exactly one configuration cell, which constructs `AuditConfig.from_dict(CONFIG)` before the audit executes.
 
 The notebook has no saved outputs or execution counts. Source and bundle SHA-256 metadata identify the embedded implementation and appear in its report. Regenerate after source changes.
 
 ## Browser steps
 
 1. Confirm signed-in access to the intended competition and accept live rules if required.
-2. Import `notebooks/kaggle_audit.ipynb` in the Kaggle browser.
+2. Import the entire `notebooks/kaggle_audit.ipynb` file into a fresh notebook. For CSV inspection, import `notebooks/kaggle_audit_csv.ipynb` instead. Do not append cells from either file to the previous broken notebook.
 3. Attach the official competition input.
 4. Select CPU and Internet Off. Discovery needs no GPU.
-5. Review `CONFIG`. Inputs default to `/kaggle/input`; reports go to `/kaggle/working/rsna_audit`. Keep `inspect_csv=False` until real-data audit is approved.
+5. The generated configuration uses `/kaggle/input` and `/kaggle/working/rsna_audit`. Choose the generated file for the intended mode; no added or rearranged configuration cells are needed. Keep discovery-only mode until real-data CSV inspection is approved.
 6. Save and run all cells from a clean session.
 7. Review the compact JSON result and logs. Missing, ambiguous, unsafe, or incomplete discovery must remain visible.
 8. Retain compact evidence after reviewing its contents.
 
 The notebook does not authenticate a CLI, call APIs, download data, install packages, decode DICOMs, retrieve weights, or train. Execution success alone does not verify competition access or full input integrity.
+
+Re-running the same verified embedded source keeps the configuration class identity intact. When importing a changed source bundle, use Run All so the single configuration cell constructs its matching validated object. Missing/stale configurations and stale reports produce explicit execution-order guidance.
 
 ## Storage and interpretation
 
